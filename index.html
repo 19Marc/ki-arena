@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>KI-Arena — Marc-KI vs Martin-KI</title>
+<title>KI-Arena — Claude vs Claude</title>
 <style>
   :root{
     --bg:#0a0e14; --panel:#111722; --line:#1e2735;
@@ -11,287 +11,361 @@
     --txt:#e6edf3; --txt2:#8b98a9; --accent:#facc15;
   }
   *{box-sizing:border-box;margin:0;padding:0}
-  body{
-    background:radial-gradient(1200px 600px at 50% -10%,#16202e 0%,var(--bg) 60%);
+  body{background:radial-gradient(1200px 600px at 50% -10%,#16202e 0%,var(--bg) 60%);
     color:var(--txt);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
-    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px;
-  }
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px;}
   h1{font-size:clamp(22px,4vw,34px);letter-spacing:.5px;font-weight:800;text-align:center}
   h1 .vs{color:var(--txt2);font-weight:600}
   h1 .m{color:var(--marc)} h1 .t{color:var(--martin)}
-  .sub{color:var(--txt2);font-size:13px;margin-top:6px;text-align:center}
+  .sub{color:var(--txt2);font-size:13px;margin-top:6px;text-align:center;max-width:560px}
 
   .scoreboard{display:flex;gap:14px;margin:22px 0 18px;flex-wrap:wrap;justify-content:center}
-  .score{background:var(--panel);border:1px solid var(--line);border-radius:14px;
-    padding:14px 22px;min-width:140px;text-align:center}
-  .score .name{font-weight:700;font-size:14px} .score.marc .name{color:var(--marc)}
-  .score.martin .name{color:var(--martin)}
-  .score .val{font-size:34px;font-weight:800;line-height:1.1;margin-top:2px}
+  .score{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:14px 22px;min-width:130px;text-align:center}
+  .score .name{font-weight:700;font-size:14px} .score.marc .name{color:var(--marc)} .score.martin .name{color:var(--martin)}
+  .score .val{font-size:32px;font-weight:800;line-height:1.1;margin-top:2px}
   .score .lbl{color:var(--txt2);font-size:11px;text-transform:uppercase;letter-spacing:.8px}
 
-  .tabs{display:flex;gap:8px;margin-bottom:18px}
-  .tab{background:var(--panel);border:1px solid var(--line);color:var(--txt2);
-    padding:9px 20px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;transition:.15s}
+  .tabs{display:flex;gap:8px;margin-bottom:18px;flex-wrap:wrap;justify-content:center}
+  .tab{background:var(--panel);border:1px solid var(--line);color:var(--txt2);padding:9px 18px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;transition:.15s}
   .tab.active{color:var(--txt);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
   .tab:hover{color:var(--txt)}
 
-  .stage{background:var(--panel);border:1px solid var(--line);border-radius:18px;
-    padding:22px;width:min(560px,100%);display:flex;flex-direction:column;align-items:center}
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:18px;padding:22px;width:min(560px,100%);display:flex;flex-direction:column;align-items:center}
 
-  /* Tic Tac Toe */
-  #ttt{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(330px,80vw);aspect-ratio:1}
-  .cell{background:#0c1118;border:1px solid var(--line);border-radius:12px;
-    display:flex;align-items:center;justify-content:center;font-size:clamp(36px,11vw,64px);
-    font-weight:800;transition:.2s}
+  .grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(330px,80vw);aspect-ratio:1}
+  .cell{background:#0c1118;border:1px solid var(--line);border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:clamp(36px,11vw,64px);font-weight:800;transition:.15s}
   .cell.x{color:var(--marc)} .cell.o{color:var(--martin)}
   .cell.win{background:#1a2433;box-shadow:0 0 18px rgba(250,204,21,.4)}
+  .cell.live{cursor:pointer} .cell.live:hover{border-color:var(--accent);background:#121a26}
 
-  /* Pong */
   #pong{background:#070a0f;border:1px solid var(--line);border-radius:12px;width:100%;max-width:520px;height:320px;display:block}
 
   .controls{display:flex;gap:10px;align-items:center;margin-top:20px;flex-wrap:wrap;justify-content:center}
-  button.btn{background:var(--accent);color:#1a1500;border:none;padding:10px 20px;border-radius:10px;
-    font-weight:700;cursor:pointer;font-size:14px;transition:.15s}
+  button.btn{background:var(--accent);color:#1a1500;border:none;padding:10px 18px;border-radius:10px;font-weight:700;cursor:pointer;font-size:14px;transition:.15s}
   button.btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
   button.btn:hover{filter:brightness(1.08)}
+  button.btn:disabled{opacity:.4;cursor:not-allowed}
   .speed{display:flex;align-items:center;gap:8px;color:var(--txt2);font-size:13px}
   input[type=range]{accent-color:var(--accent)}
 
   .status{margin-top:16px;min-height:24px;font-size:15px;font-weight:600;text-align:center}
-  .log{margin-top:14px;width:min(560px,100%);max-height:120px;overflow-y:auto;font-size:12px;
-    color:var(--txt2);line-height:1.7;font-family:ui-monospace,monospace}
+  .log{margin-top:14px;width:min(560px,100%);max-height:120px;overflow-y:auto;font-size:12px;color:var(--txt2);line-height:1.7;font-family:ui-monospace,monospace}
   .log b.m{color:var(--marc)} .log b.t{color:var(--martin)}
-  footer{margin-top:26px;color:var(--txt2);font-size:12px;text-align:center}
+
+  /* Online */
+  .you{font-size:14px;margin-bottom:12px}
+  .pill{display:inline-block;padding:3px 10px;border-radius:20px;font-weight:700;font-size:13px}
+  .pill.x{background:rgba(56,189,248,.16);color:var(--marc)} .pill.o{background:rgba(244,114,182,.16);color:var(--martin)} .pill.s{background:#1a2433;color:var(--txt2)}
+  .share{width:100%;background:#0c1118;border:1px solid var(--line);border-radius:12px;padding:14px;margin-bottom:14px}
+  .share .row{display:flex;gap:8px;align-items:center;margin-top:8px}
+  .share input{flex:1;background:#070a0f;border:1px solid var(--line);color:var(--txt);border-radius:8px;padding:8px 10px;font-size:13px;font-family:ui-monospace,monospace}
+  .share .code{font-size:26px;font-weight:800;letter-spacing:4px;color:var(--accent);text-align:center}
+  details{width:100%;margin-top:14px;background:#0c1118;border:1px solid var(--line);border-radius:12px;padding:12px 14px}
+  summary{cursor:pointer;font-weight:600;font-size:13px;color:var(--txt2)}
+  details pre{margin-top:10px;white-space:pre-wrap;word-break:break-all;font-size:11.5px;color:var(--txt2);line-height:1.6}
+  .hidden{display:none}
+  footer{margin-top:26px;color:var(--txt2);font-size:12px;text-align:center;max-width:560px}
+  a{color:var(--marc)}
 </style>
 </head>
 <body>
   <h1><span class="m">Marc-KI</span> <span class="vs">vs</span> <span class="t">Martin-KI</span></h1>
-  <div class="sub">KI-Arena — zwei Bots spielen automatisch gegeneinander 🤖⚔️🤖</div>
+  <div class="sub">KI-Arena 🤖⚔️🤖 — schau zwei Bots automatisch spielen, <b>oder</b> tritt im Online-Modus mit deinem eigenen Claude gegen einen anderen Claude an.</div>
 
   <div class="scoreboard">
     <div class="score marc"><div class="name">Marc-KI</div><div class="val" id="scMarc">0</div><div class="lbl">Siege</div></div>
-    <div class="score"><div class="name" style="color:var(--txt2)">Unentschieden</div><div class="val" id="scDraw">0</div><div class="lbl">Remis</div></div>
+    <div class="score"><div class="name" style="color:var(--txt2)">Remis</div><div class="val" id="scDraw">0</div><div class="lbl">Unentsch.</div></div>
     <div class="score martin"><div class="name">Martin-KI</div><div class="val" id="scMartin">0</div><div class="lbl">Siege</div></div>
   </div>
 
   <div class="tabs">
-    <div class="tab active" data-game="ttt">⭕ Tic-Tac-Toe</div>
-    <div class="tab" data-game="pong">🏓 Pong</div>
+    <div class="tab active" data-game="ttt">⭕ Tic-Tac-Toe (Auto)</div>
+    <div class="tab" data-game="pong">🏓 Pong (Auto)</div>
+    <div class="tab" data-game="online">🔗 Online: Claude vs Claude</div>
   </div>
 
-  <div class="stage">
-    <div id="ttt"></div>
+  <!-- AUTO-DEMO STAGE -->
+  <div class="stage" id="stageAuto">
+    <div id="ttt" class="grid"></div>
     <canvas id="pong" width="520" height="320" style="display:none"></canvas>
-
     <div class="status" id="status">Bereit.</div>
-
     <div class="controls">
       <button class="btn" id="playBtn">▶ Start</button>
       <button class="btn ghost" id="resetBtn">⟳ Reset Score</button>
-      <div class="speed">Tempo
-        <input type="range" id="speed" min="1" max="10" value="5">
+      <div class="speed">Tempo <input type="range" id="speed" min="1" max="10" value="5"></div>
+    </div>
+  </div>
+
+  <!-- ONLINE STAGE -->
+  <div class="stage hidden" id="stageOnline">
+    <!-- Setup -->
+    <div id="onlineSetup" style="width:100%;text-align:center">
+      <p style="color:var(--txt2);font-size:14px;margin-bottom:16px">Starte ein Match und schick den Link an deinen Gegner. Jede Seite fragt ihren eigenen Claude, was zu spielen ist.</p>
+      <button class="btn" id="createBtn">🎮 Neues Match starten</button>
+      <p style="color:var(--txt2);font-size:12px;margin-top:14px">…oder öffne einfach den Link, den dir jemand geschickt hat.</p>
+    </div>
+
+    <!-- Game -->
+    <div id="onlineGame" class="hidden" style="width:100%;display:flex;flex-direction:column;align-items:center">
+      <div class="you">Du spielst: <span id="youPill" class="pill s">…</span></div>
+
+      <div class="share" id="shareBox">
+        <div style="color:var(--txt2);font-size:12px;text-align:center">Match-Code</div>
+        <div class="code" id="roomCode">––––</div>
+        <div class="row">
+          <input id="shareLink" readonly>
+          <button class="btn" id="copyLink">📋 Link</button>
+        </div>
+        <div style="color:var(--txt2);font-size:11px;margin-top:8px;text-align:center" id="joinHint">Warte auf den zweiten Spieler …</div>
       </div>
+
+      <div id="ottt" class="grid"></div>
+      <div class="status" id="ostatus">…</div>
+
+      <div class="controls">
+        <button class="btn" id="askClaude">📋 Anweisung für dein Claude</button>
+        <button class="btn ghost hidden" id="rematchBtn">↻ Revanche</button>
+      </div>
+
+      <details>
+        <summary>🔧 Autonom spielen lassen (für Claude Code / Tüftler)</summary>
+        <pre id="apiDoc"></pre>
+      </details>
     </div>
   </div>
 
   <div class="log" id="log"></div>
-
-  <footer>Beide KIs laufen komplett im Browser — keine Server, keine Cookies. Gebaut von J.A.R.V.I.S. für BiBitX.</footer>
+  <footer>Läuft auf Cloudflare — kein Tracking, keine Cookies. Online-Matches verfallen nach 24 h.<br>Gebaut von J.A.R.V.I.S. für BiBitX.</footer>
 
 <script>
 "use strict";
-/* ---------- Shared ---------- */
 const $=id=>document.getElementById(id);
 const score={marc:0,martin:0,draw:0};
 function renderScore(){ $("scMarc").textContent=score.marc; $("scMartin").textContent=score.martin; $("scDraw").textContent=score.draw; }
 function logLine(html){ const l=$("log"); const d=document.createElement("div"); d.innerHTML=html; l.prepend(d); while(l.children.length>40) l.lastChild.remove(); }
 function setStatus(html){ $("status").innerHTML=html; }
 const NAME={marc:'<b class="m">Marc-KI</b>', martin:'<b class="t">Martin-KI</b>'};
-
 let game="ttt", running=false, speed=5;
 $("speed").oninput=e=>speed=+e.target.value;
 
-/* ===================================================================
-   TIC-TAC-TOE   (Marc = X = perfekt/Minimax, Martin = O = clever-mit-Patzer)
-   =================================================================== */
-const TTT={ board:Array(9).fill(""), turn:"marc", lines:[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]], timer:null };
-
-function tttRender(winLine){
-  const el=$("ttt"); el.innerHTML="";
-  TTT.board.forEach((v,i)=>{
+/* ===== TIC-TAC-TOE (Auto) ===== */
+const LINES=[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]];
+const TTT={board:Array(9).fill(""),turn:"marc",timer:null};
+function gridRender(elId,board,winLine,liveClick){
+  const el=$(elId); el.innerHTML="";
+  board.forEach((v,i)=>{
     const c=document.createElement("div");
-    c.className="cell"+(v==="X"?" x":v==="O"?" o":"")+(winLine&&winLine.includes(i)?" win":"");
+    c.className="cell"+(v==="X"?" x":v==="O"?" o":"")+(winLine&&winLine.includes(i)?" win":"")+(liveClick&&!v?" live":"");
     c.textContent=v;
+    if(liveClick&&!v) c.onclick=()=>liveClick(i);
     el.appendChild(c);
   });
 }
-function tttWinner(b){
-  for(const [a,c,d] of TTT.lines){ if(b[a]&&b[a]===b[c]&&b[a]===b[d]) return {who:b[a],line:[a,c,d]}; }
-  if(b.every(x=>x)) return {who:"draw"};
-  return null;
-}
-// Minimax (perfektes Spiel) für Symbol `me`
-function minimax(b,me,cur){
-  const w=tttWinner(b);
-  if(w){ if(w.who==="draw") return 0; return w.who===me?10:-10; }
-  const moves=b.map((v,i)=>v?null:i).filter(i=>i!==null);
-  let best=cur===me?-Infinity:Infinity;
-  for(const i of moves){
-    b[i]=cur; const s=minimax(b,me,cur==="X"?"O":"X"); b[i]="";
-    best=cur===me?Math.max(best,s):Math.min(best,s);
-  }
-  return best;
-}
-function bestMove(b,me){
-  const moves=b.map((v,i)=>v?null:i).filter(i=>i!==null);
-  let best=-Infinity,pick=moves[0];
-  for(const i of moves){ b[i]=me; const s=minimax(b,me,me==="X"?"O":"X"); b[i]="";
-    if(s>best){best=s;pick=i;} }
-  return pick;
-}
-// Martin: meist clever, aber mit ~22% Zufalls-Patzer (damit Marc auch gewinnt)
-function martinMove(b){
-  const moves=b.map((v,i)=>v?null:i).filter(i=>i!==null);
-  if(Math.random()<0.22) return moves[Math.floor(Math.random()*moves.length)];
-  return bestMove(b,"O");
-}
+function tttWinner(b){ for(const[a,c,d]of LINES){if(b[a]&&b[a]===b[c]&&b[a]===b[d])return{who:b[a],line:[a,c,d]};} if(b.every(x=>x))return{who:"draw"}; return null; }
+function minimax(b,me,cur){ const w=tttWinner(b); if(w){if(w.who==="draw")return 0;return w.who===me?10:-10;}
+  const mv=b.map((v,i)=>v?null:i).filter(i=>i!==null); let best=cur===me?-1e9:1e9;
+  for(const i of mv){b[i]=cur;const s=minimax(b,me,cur==="X"?"O":"X");b[i]="";best=cur===me?Math.max(best,s):Math.min(best,s);} return best; }
+function bestMove(b,me){ const mv=b.map((v,i)=>v?null:i).filter(i=>i!==null); let best=-1e9,pick=mv[0];
+  for(const i of mv){b[i]=me;const s=minimax(b,me,me==="X"?"O":"X");b[i]="";if(s>best){best=s;pick=i;}} return pick; }
+function martinMove(b){ const mv=b.map((v,i)=>v?null:i).filter(i=>i!==null); if(Math.random()<0.22)return mv[Math.floor(Math.random()*mv.length)]; return bestMove(b,"O"); }
 function tttStep(){
   const sym=TTT.turn==="marc"?"X":"O";
   const move=TTT.turn==="marc"?bestMove(TTT.board,"X"):martinMove(TTT.board);
   TTT.board[move]=sym;
-  const r=Math.floor(move/3)+1, c=(move%3)+1;
-  logLine(`${NAME[TTT.turn]} setzt auf Feld ${r}/${c}`);
+  logLine(`${NAME[TTT.turn]} → Feld ${move+1}`);
   const w=tttWinner(TTT.board);
-  if(w){ tttRender(w.line); tttEnd(w); return; }
-  tttRender();
-  TTT.turn=TTT.turn==="marc"?"martin":"marc";
-  setStatus(`${NAME[TTT.turn]} denkt …`);
-  schedule(tttStep);
+  if(w){ gridRender("ttt",TTT.board,w.line); tttEnd(w); return; }
+  gridRender("ttt",TTT.board); TTT.turn=TTT.turn==="marc"?"martin":"marc";
+  setStatus(`${NAME[TTT.turn]} denkt …`); schedule(tttStep);
 }
 function tttEnd(w){
-  if(w.who==="draw"){ score.draw++; setStatus("Unentschieden 🤝"); logLine("➖ Unentschieden"); }
-  else { const who=w.who==="X"?"marc":"martin"; score[who]++; setStatus(`${NAME[who]} gewinnt! 🏆`); logLine(`🏆 ${NAME[who]} gewinnt die Runde`); }
+  if(w.who==="draw"){score.draw++;setStatus("Remis 🤝");logLine("➖ Remis");}
+  else{const who=w.who==="X"?"marc":"martin";score[who]++;setStatus(`${NAME[who]} gewinnt! 🏆`);logLine(`🏆 ${NAME[who]} gewinnt`);}
   renderScore();
-  if(running) setTimeout(()=>{ if(running&&game==="ttt"){ tttReset(); schedule(tttStep);} }, 1400);
+  if(running) setTimeout(()=>{if(running&&game==="ttt"){tttReset();schedule(tttStep);}},1400);
 }
-function tttReset(){
-  TTT.board=Array(9).fill(""); TTT.turn="marc"; tttRender();
-  setStatus(running?`${NAME.marc} beginnt …`:"Bereit.");
+function tttReset(){TTT.board=Array(9).fill("");TTT.turn="marc";gridRender("ttt",TTT.board);setStatus(running?`${NAME.marc} beginnt …`:"Bereit.");}
+
+/* ===== PONG (Auto) ===== */
+const cv=$("pong"),ctx=cv.getContext("2d");
+const W=cv.width,H=cv.height,PW=10,PH=64,BALL=8,PWIN=5;
+const P={marc:{x:14,y:H/2-PH/2,err:14,vmax:5},martin:{x:W-14-PW,y:H/2-PH/2,err:14,vmax:5},ball:{x:W/2,y:H/2,vx:0,vy:0},raf:null};
+let pongRound={marc:0,martin:0};
+function pongServe(d){P.ball.x=W/2;P.ball.y=H/2;const a=Math.random()*.6-.3;P.ball.vx=d*4.2*Math.cos(a);P.ball.vy=4.2*Math.sin(a);}
+function pongAI(p){const t=P.ball.y-PH/2+Math.sin(Date.now()/300+p.x)*p.err;const dy=t-p.y;p.y+=Math.max(-p.vmax,Math.min(p.vmax,dy));p.y=Math.max(0,Math.min(H-PH,p.y));}
+function pongDraw(){ctx.clearRect(0,0,W,H);ctx.strokeStyle="#1e2735";ctx.setLineDash([6,10]);ctx.beginPath();ctx.moveTo(W/2,0);ctx.lineTo(W/2,H);ctx.stroke();ctx.setLineDash([]);
+  ctx.fillStyle="#38bdf8";ctx.fillRect(P.marc.x,P.marc.y,PW,PH);ctx.fillStyle="#f472b6";ctx.fillRect(P.martin.x,P.martin.y,PW,PH);
+  ctx.fillStyle="#facc15";ctx.beginPath();ctx.arc(P.ball.x,P.ball.y,BALL,0,7);ctx.fill();}
+function pongFrame(){
+  if(!running||game!=="pong"){P.raf=null;return;}
+  const steps=Math.max(1,Math.round(speed*0.7));
+  for(let s=0;s<steps;s++){
+    pongAI(P.marc);pongAI(P.martin);P.ball.x+=P.ball.vx;P.ball.y+=P.ball.vy;
+    if(P.ball.y<BALL){P.ball.y=BALL;P.ball.vy*=-1;} if(P.ball.y>H-BALL){P.ball.y=H-BALL;P.ball.vy*=-1;}
+    if(P.ball.x-BALL<P.marc.x+PW&&P.ball.x>P.marc.x&&P.ball.vx<0&&P.ball.y>P.marc.y&&P.ball.y<P.marc.y+PH){P.ball.vx=Math.abs(P.ball.vx)*1.04;P.ball.vy+=((P.ball.y-(P.marc.y+PH/2))/(PH/2))*2;}
+    if(P.ball.x+BALL>P.martin.x&&P.ball.x<P.martin.x+PW&&P.ball.vx>0&&P.ball.y>P.martin.y&&P.ball.y<P.martin.y+PH){P.ball.vx=-Math.abs(P.ball.vx)*1.04;P.ball.vy+=((P.ball.y-(P.martin.y+PH/2))/(PH/2))*2;}
+    if(P.ball.x<0){pongPoint("martin");break;} if(P.ball.x>W){pongPoint("marc");break;}
+  }
+  pongDraw();P.raf=requestAnimationFrame(pongFrame);
 }
+function pongPoint(who){pongRound[who]++;logLine(`🏓 Punkt ${NAME[who]} — ${pongRound.marc}:${pongRound.martin}`);
+  setStatus(`Satz: ${NAME.marc} ${pongRound.marc} : ${pongRound.martin} ${NAME.martin}`);
+  if(pongRound[who]>=PWIN){score[who]++;renderScore();setStatus(`${NAME[who]} gewinnt den Satz! 🏆`);logLine(`🏆 ${NAME[who]} gewinnt (${pongRound.marc}:${pongRound.martin})`);pongRound={marc:0,martin:0};}
+  pongServe(who==="marc"?1:-1);}
+function pongResetPositions(){P.marc.y=H/2-PH/2;P.martin.y=H/2-PH/2;pongServe(Math.random()<.5?1:-1);pongDraw();}
+
+/* ===== Scheduler (Auto-TTT) ===== */
+function schedule(fn){clearTimeout(TTT.timer);if(!running)return;const d=1100-speed*95;TTT.timer=setTimeout(()=>{if(running&&game==="ttt")fn();},Math.max(120,d));}
+
+/* ===== Auto-Steuerung ===== */
+function startLoop(){if(game==="ttt"){tttReset();setStatus(`${NAME.marc} beginnt …`);schedule(tttStep);}
+  else if(game==="pong"){pongRound={marc:0,martin:0};pongResetPositions();if(!P.raf)P.raf=requestAnimationFrame(pongFrame);}}
+function stopLoop(){clearTimeout(TTT.timer);}
+$("playBtn").onclick=()=>{running=!running;$("playBtn").textContent=running?"⏸ Pause":"▶ Start";if(running)startLoop();else{stopLoop();setStatus("Pausiert.");}};
+$("resetBtn").onclick=()=>{score.marc=score.martin=score.draw=0;renderScore();logLine("⟳ Score zurückgesetzt");};
 
 /* ===================================================================
-   PONG   (Marc = links/cyan, Martin = rechts/pink, beide tracken den Ball)
+   ONLINE: Claude vs Claude (Tic-Tac-Toe über Cloudflare-Backend)
    =================================================================== */
-const cv=$("pong"), ctx=cv.getContext("2d");
-const W=cv.width, H=cv.height, PW=10, PH=64, BALL=8, WIN=5;
-const P={
-  marc:{x:14, y:H/2-PH/2, err:14, vmax:5},     // links
-  martin:{x:W-14-PW, y:H/2-PH/2, err:14, vmax:5}, // rechts
-  ball:{x:W/2,y:H/2,vx:0,vy:0}, raf:null
-};
-function pongServe(dir){
-  P.ball.x=W/2; P.ball.y=H/2;
-  const ang=(Math.random()*0.6-0.3); // leichter Winkel
-  const sp=4.2;
-  P.ball.vx=dir*sp*Math.cos(ang); P.ball.vy=sp*Math.sin(ang);
+const ON={code:null,side:null,room:null,poll:null,lastUpdated:0};
+const api=(path,opt)=>fetch("/api/"+path,opt).then(r=>r.json());
+const sideName=s=>s==="X"?'<b class="m">Marc-KI</b>':s==="O"?'<b class="t">Martin-KI</b>':"Zuschauer";
+const sideKey=s=>s==="X"?"marc":"martin";
+
+async function createMatch(){
+  const r=await api("create",{method:"POST"});
+  if(!r.ok){logLine("⚠️ Konnte Match nicht erstellen");return;}
+  ON.code=r.room.code; ON.side="X"; localStorage.setItem("kiarena_"+ON.code,"X");
+  enterRoom(r.room);
+  history.replaceState(null,"","?room="+ON.code);
 }
-function pongAI(pad){
-  // Ziel: Ballhöhe + kleiner Wahrnehmungsfehler -> menschlich, nicht unbesiegbar
-  const target=P.ball.y - PH/2 + (Math.sin(Date.now()/300+pad.x)*pad.err);
-  const dy=target - pad.y;
-  pad.y += Math.max(-pad.vmax, Math.min(pad.vmax, dy));
-  pad.y=Math.max(0, Math.min(H-PH, pad.y));
-}
-function pongDraw(){
-  ctx.clearRect(0,0,W,H);
-  // Mittellinie
-  ctx.strokeStyle="#1e2735"; ctx.setLineDash([6,10]); ctx.beginPath();
-  ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke(); ctx.setLineDash([]);
-  // Paddles
-  ctx.fillStyle="#38bdf8"; ctx.fillRect(P.marc.x,P.marc.y,PW,PH);
-  ctx.fillStyle="#f472b6"; ctx.fillRect(P.martin.x,P.martin.y,PW,PH);
-  // Ball
-  ctx.fillStyle="#facc15"; ctx.beginPath(); ctx.arc(P.ball.x,P.ball.y,BALL,0,7); ctx.fill();
-}
-function pongFrame(){
-  if(!running||game!=="pong"){ P.raf=null; return; }
-  const steps=Math.max(1,Math.round(speed*0.7)); // Tempo = mehr Physik-Schritte pro Frame
-  for(let s=0;s<steps;s++){
-    pongAI(P.marc); pongAI(P.martin);
-    P.ball.x+=P.ball.vx; P.ball.y+=P.ball.vy;
-    if(P.ball.y<BALL){P.ball.y=BALL;P.ball.vy*=-1;}
-    if(P.ball.y>H-BALL){P.ball.y=H-BALL;P.ball.vy*=-1;}
-    // Marc-Paddle (links)
-    if(P.ball.x-BALL<P.marc.x+PW && P.ball.x>P.marc.x && P.ball.vx<0 &&
-       P.ball.y>P.marc.y && P.ball.y<P.marc.y+PH){
-      P.ball.vx=Math.abs(P.ball.vx)*1.04;
-      P.ball.vy+=((P.ball.y-(P.marc.y+PH/2))/(PH/2))*2;
-    }
-    // Martin-Paddle (rechts)
-    if(P.ball.x+BALL>P.martin.x && P.ball.x<P.martin.x+PW && P.ball.vx>0 &&
-       P.ball.y>P.martin.y && P.ball.y<P.martin.y+PH){
-      P.ball.vx=-Math.abs(P.ball.vx)*1.04;
-      P.ball.vy+=((P.ball.y-(P.martin.y+PH/2))/(PH/2))*2;
-    }
-    // Punkt
-    if(P.ball.x<0){ pongPoint("martin"); break; }
-    if(P.ball.x>W){ pongPoint("marc"); break; }
+async function openRoom(code){
+  code=code.toUpperCase();
+  let r=await api("state?room="+code);
+  if(!r.ok){logLine("⚠️ Match "+code+" nicht gefunden");$("onlineSetup").classList.remove("hidden");$("onlineGame").classList.add("hidden");return;}
+  let side=localStorage.getItem("kiarena_"+code);
+  if(!side){
+    if(!r.room.players.O){ const j=await api("join",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({room:code})}); r=j; side="O"; localStorage.setItem("kiarena_"+code,"O"); }
+    else side="spectator";
   }
-  pongDraw();
-  P.raf=requestAnimationFrame(pongFrame);
+  ON.code=code; ON.side=side; enterRoom(r.room);
 }
-let pongRound={marc:0,martin:0};
-function pongPoint(who){
-  pongRound[who]++;
-  logLine(`🏓 Punkt für ${NAME[who]} — Satz ${pongRound.marc}:${pongRound.martin}`);
-  setStatus(`Satz: ${NAME.marc} ${pongRound.marc} : ${pongRound.martin} ${NAME.martin}`);
-  if(pongRound[who]>=WIN){
-    score[who]++; renderScore();
-    setStatus(`${NAME[who]} gewinnt den Satz! 🏆`);
-    logLine(`🏆 ${NAME[who]} gewinnt (${pongRound.marc}:${pongRound.martin})`);
-    pongRound={marc:0,martin:0};
-  }
-  pongServe(who==="marc"?1:-1);
+function enterRoom(room){
+  $("onlineSetup").classList.add("hidden"); $("onlineGame").classList.remove("hidden");
+  $("roomCode").textContent=ON.code;
+  const link=location.origin+"/?room="+ON.code;
+  $("shareLink").value=link;
+  const yp=$("youPill");
+  yp.className="pill "+(ON.side==="X"?"x":ON.side==="O"?"o":"s");
+  yp.innerHTML=ON.side==="X"?"Marc-KI ✕":ON.side==="O"?"Martin-KI ◯":"Zuschauer";
+  renderOnline(room);
+  startPolling();
 }
-function pongResetPositions(){
-  P.marc.y=H/2-PH/2; P.martin.y=H/2-PH/2; pongServe(Math.random()<.5?1:-1); pongDraw();
-}
+function startPolling(){ clearInterval(ON.poll); ON.poll=setInterval(async()=>{
+  if(game!=="online"||!ON.code) return;
+  const r=await api("state?room="+ON.code);
+  if(r.ok && r.room.updated!==ON.lastUpdated) renderOnline(r.room);
+},1500); }
 
-/* ---------- Scheduler (Tempo-abhängig, für TTT) ---------- */
-function schedule(fn){
-  clearTimeout(TTT.timer);
-  if(!running) return;
-  const delay=1100 - speed*95; // 1=1005ms … 10=150ms
-  TTT.timer=setTimeout(()=>{ if(running&&game==="ttt") fn(); }, Math.max(120,delay));
+function renderOnline(room){
+  ON.room=room; ON.lastUpdated=room.updated;
+  score.marc=room.score.marc; score.martin=room.score.martin; score.draw=room.score.draw; renderScore();
+  const myTurn = !room.winner && room.turn===ON.side;
+  gridRender("ottt",room.board,room.winLine,myTurn?onlineClick:null);
+  // Join-Hinweis
+  $("joinHint").innerHTML = room.players.O ? "✅ Beide Spieler da" : "Warte auf den zweiten Spieler … (Link teilen!)";
+  $("shareBox").style.display = room.players.O ? "none" : "block";
+  // Status
+  let st;
+  if(room.winner==="draw") st="Remis 🤝 — "+(canRematch()?"Revanche?":"warte auf Revanche …");
+  else if(room.winner) st=sideName(room.winner)+" gewinnt! 🏆 — "+(canRematch()?"Revanche?":"warte auf Revanche …");
+  else if(!room.players.O) st="Warte auf Gegner …";
+  else if(myTurn) st="<b>Du bist dran</b> — frag dein Claude (📋) und tippe das Feld an.";
+  else st=sideName(room.turn)+" ist dran …";
+  $("ostatus").innerHTML=st;
+  $("rematchBtn").classList.toggle("hidden", !room.winner);
+  // API-Doc
+  $("apiDoc").textContent=apiDocText();
 }
+function canRematch(){ return ON.side==="X"||ON.side==="O"; }
 
-/* ---------- Steuerung ---------- */
-function startLoop(){
-  if(game==="ttt"){ tttReset(); setStatus(`${NAME.marc} beginnt …`); schedule(tttStep); }
-  else { pongRound={marc:0,martin:0}; pongResetPositions(); if(!P.raf) P.raf=requestAnimationFrame(pongFrame); }
+async function onlineClick(i){
+  if(!ON.room||ON.room.turn!==ON.side||ON.room.winner) return;
+  const r=await api("move",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({room:ON.code,side:ON.side,cell:i+1})});
+  if(r.ok) renderOnline(r.room);
+  else if(r.room) renderOnline(r.room);
 }
-function stopLoop(){ clearTimeout(TTT.timer); }
-$("playBtn").onclick=()=>{
-  running=!running;
-  $("playBtn").textContent=running?"⏸ Pause":"▶ Start";
-  if(running) startLoop(); else { stopLoop(); setStatus("Pausiert."); }
+$("createBtn").onclick=createMatch;
+$("copyLink").onclick=()=>{navigator.clipboard.writeText($("shareLink").value);$("copyLink").textContent="✓";setTimeout(()=>$("copyLink").textContent="📋 Link",1200);};
+$("rematchBtn").onclick=async()=>{ const r=await api("rematch",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({room:ON.code})}); if(r.ok)renderOnline(r.room); };
+
+function boardAscii(b){
+  const c=b.map((v,i)=>v||String(i+1));
+  return ` ${c[0]} | ${c[1]} | ${c[2]}\n---+---+---\n ${c[3]} | ${c[4]} | ${c[5]}\n---+---+---\n ${c[6]} | ${c[7]} | ${c[8]}`;
+}
+$("askClaude").onclick=()=>{
+  const r=ON.room; if(!r){return;}
+  const meName=ON.side==="X"?"Marc-KI (Symbol ✕)":"Martin-KI (Symbol ◯)";
+  const free=r.board.map((v,i)=>v?null:i+1).filter(x=>x).join(", ");
+  const prompt=
+`Wir spielen Tic-Tac-Toe, KI gegen KI. Du bist ${meName}.
+Felder sind von 1 bis 9 nummeriert:
+ 1 | 2 | 3
+ 4 | 5 | 6
+ 7 | 8 | 9
+
+Aktueller Spielstand (Zahlen = noch freie Felder):
+${boardAscii(r.board)}
+
+Freie Felder: ${free}
+Du bist am Zug. Nenne mir NUR die Zahl (1-9) deines nächsten Zugs plus einen kurzen Satz Begründung. Spiele clever — gewinne, wenn du kannst, sonst blocke den Gegner.`;
+  navigator.clipboard.writeText(prompt);
+  $("askClaude").textContent="✓ kopiert — ab ins Claude-Chat!";
+  setTimeout(()=>$("askClaude").textContent="📋 Anweisung für dein Claude",1800);
 };
-$("resetBtn").onclick=()=>{ score.marc=score.martin=score.draw=0; renderScore(); logLine("⟳ Score zurückgesetzt"); };
+function apiDocText(){
+  const o=location.origin;
+  return `Dein Claude kann auch selbst spielen (Claude Code / Tool-Zugriff):
 
+1) Spielstand abrufen:
+   curl "${o}/api/state?room=${ON.code||"CODE"}"
+
+2) Wenn "turn" deinem Symbol entspricht ("${ON.side||"X"}"), Zug senden:
+   curl -X POST "${o}/api/move" -H "Content-Type: application/json" \\
+     -d '{"room":"${ON.code||"CODE"}","side":"${ON.side||"X"}","cell":5}'
+   (cell = 1-9, gezählt von oben-links nach unten-rechts)
+
+3) Poll wiederholen, bis "winner" gesetzt ist. Anweisung an dein Claude:
+   "Spiele Tic-Tac-Toe über diese API als Seite ${ON.side||"X"}, Match ${ON.code||"CODE"}.
+    Hol den Stand, spiele optimal wenn du dran bist, bis das Spiel vorbei ist."`;
+}
+
+/* ===== Tab-Umschaltung ===== */
 document.querySelectorAll(".tab").forEach(t=>{
   t.onclick=()=>{
     document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
-    t.classList.add("active");
-    game=t.dataset.game; stopLoop();
-    $("ttt").style.display = game==="ttt"?"grid":"none";
-    $("pong").style.display = game==="pong"?"block":"none";
-    if(game==="ttt"){ tttReset(); if(running) schedule(tttStep); }
-    else { pongResetPositions(); if(running && !P.raf) P.raf=requestAnimationFrame(pongFrame); }
+    t.classList.add("active"); game=t.dataset.game; stopLoop();
+    const online=game==="online";
+    $("stageAuto").classList.toggle("hidden",online);
+    $("stageOnline").classList.toggle("hidden",!online);
+    $("ttt").style.display=game==="ttt"?"grid":"none";
+    $("pong").style.display=game==="pong"?"block":"none";
+    if(game==="ttt"){running&&schedule(tttStep);tttReset();}
+    else if(game==="pong"){pongResetPositions();if(running&&!P.raf)P.raf=requestAnimationFrame(pongFrame);}
+    else { // online
+      renderScore();
+      const code=new URLSearchParams(location.search).get("room");
+      if(ON.code) startPolling();
+      else if(code) openRoom(code);
+    }
   };
 });
 
 /* init */
 tttReset(); renderScore(); pongDraw();
+// Direkt mit ?room=… geöffnet -> in den Online-Tab springen
+const initialRoom=new URLSearchParams(location.search).get("room");
+if(initialRoom){ document.querySelector('.tab[data-game="online"]').click(); }
 </script>
 </body>
 </html>
