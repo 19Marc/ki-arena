@@ -1,0 +1,297 @@
+<!DOCTYPE html>
+<html lang="de">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>KI-Arena — Marc-KI vs Martin-KI</title>
+<style>
+  :root{
+    --bg:#0a0e14; --panel:#111722; --line:#1e2735;
+    --marc:#38bdf8; --martin:#f472b6;
+    --txt:#e6edf3; --txt2:#8b98a9; --accent:#facc15;
+  }
+  *{box-sizing:border-box;margin:0;padding:0}
+  body{
+    background:radial-gradient(1200px 600px at 50% -10%,#16202e 0%,var(--bg) 60%);
+    color:var(--txt);font-family:'Segoe UI',system-ui,-apple-system,sans-serif;
+    min-height:100vh;display:flex;flex-direction:column;align-items:center;padding:24px 16px;
+  }
+  h1{font-size:clamp(22px,4vw,34px);letter-spacing:.5px;font-weight:800;text-align:center}
+  h1 .vs{color:var(--txt2);font-weight:600}
+  h1 .m{color:var(--marc)} h1 .t{color:var(--martin)}
+  .sub{color:var(--txt2);font-size:13px;margin-top:6px;text-align:center}
+
+  .scoreboard{display:flex;gap:14px;margin:22px 0 18px;flex-wrap:wrap;justify-content:center}
+  .score{background:var(--panel);border:1px solid var(--line);border-radius:14px;
+    padding:14px 22px;min-width:140px;text-align:center}
+  .score .name{font-weight:700;font-size:14px} .score.marc .name{color:var(--marc)}
+  .score.martin .name{color:var(--martin)}
+  .score .val{font-size:34px;font-weight:800;line-height:1.1;margin-top:2px}
+  .score .lbl{color:var(--txt2);font-size:11px;text-transform:uppercase;letter-spacing:.8px}
+
+  .tabs{display:flex;gap:8px;margin-bottom:18px}
+  .tab{background:var(--panel);border:1px solid var(--line);color:var(--txt2);
+    padding:9px 20px;border-radius:10px;cursor:pointer;font-weight:600;font-size:14px;transition:.15s}
+  .tab.active{color:var(--txt);border-color:var(--accent);box-shadow:0 0 0 1px var(--accent) inset}
+  .tab:hover{color:var(--txt)}
+
+  .stage{background:var(--panel);border:1px solid var(--line);border-radius:18px;
+    padding:22px;width:min(560px,100%);display:flex;flex-direction:column;align-items:center}
+
+  /* Tic Tac Toe */
+  #ttt{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;width:min(330px,80vw);aspect-ratio:1}
+  .cell{background:#0c1118;border:1px solid var(--line);border-radius:12px;
+    display:flex;align-items:center;justify-content:center;font-size:clamp(36px,11vw,64px);
+    font-weight:800;transition:.2s}
+  .cell.x{color:var(--marc)} .cell.o{color:var(--martin)}
+  .cell.win{background:#1a2433;box-shadow:0 0 18px rgba(250,204,21,.4)}
+
+  /* Pong */
+  #pong{background:#070a0f;border:1px solid var(--line);border-radius:12px;width:100%;max-width:520px;height:320px;display:block}
+
+  .controls{display:flex;gap:10px;align-items:center;margin-top:20px;flex-wrap:wrap;justify-content:center}
+  button.btn{background:var(--accent);color:#1a1500;border:none;padding:10px 20px;border-radius:10px;
+    font-weight:700;cursor:pointer;font-size:14px;transition:.15s}
+  button.btn.ghost{background:transparent;color:var(--txt);border:1px solid var(--line)}
+  button.btn:hover{filter:brightness(1.08)}
+  .speed{display:flex;align-items:center;gap:8px;color:var(--txt2);font-size:13px}
+  input[type=range]{accent-color:var(--accent)}
+
+  .status{margin-top:16px;min-height:24px;font-size:15px;font-weight:600;text-align:center}
+  .log{margin-top:14px;width:min(560px,100%);max-height:120px;overflow-y:auto;font-size:12px;
+    color:var(--txt2);line-height:1.7;font-family:ui-monospace,monospace}
+  .log b.m{color:var(--marc)} .log b.t{color:var(--martin)}
+  footer{margin-top:26px;color:var(--txt2);font-size:12px;text-align:center}
+</style>
+</head>
+<body>
+  <h1><span class="m">Marc-KI</span> <span class="vs">vs</span> <span class="t">Martin-KI</span></h1>
+  <div class="sub">KI-Arena — zwei Bots spielen automatisch gegeneinander 🤖⚔️🤖</div>
+
+  <div class="scoreboard">
+    <div class="score marc"><div class="name">Marc-KI</div><div class="val" id="scMarc">0</div><div class="lbl">Siege</div></div>
+    <div class="score"><div class="name" style="color:var(--txt2)">Unentschieden</div><div class="val" id="scDraw">0</div><div class="lbl">Remis</div></div>
+    <div class="score martin"><div class="name">Martin-KI</div><div class="val" id="scMartin">0</div><div class="lbl">Siege</div></div>
+  </div>
+
+  <div class="tabs">
+    <div class="tab active" data-game="ttt">⭕ Tic-Tac-Toe</div>
+    <div class="tab" data-game="pong">🏓 Pong</div>
+  </div>
+
+  <div class="stage">
+    <div id="ttt"></div>
+    <canvas id="pong" width="520" height="320" style="display:none"></canvas>
+
+    <div class="status" id="status">Bereit.</div>
+
+    <div class="controls">
+      <button class="btn" id="playBtn">▶ Start</button>
+      <button class="btn ghost" id="resetBtn">⟳ Reset Score</button>
+      <div class="speed">Tempo
+        <input type="range" id="speed" min="1" max="10" value="5">
+      </div>
+    </div>
+  </div>
+
+  <div class="log" id="log"></div>
+
+  <footer>Beide KIs laufen komplett im Browser — keine Server, keine Cookies. Gebaut von J.A.R.V.I.S. für BiBitX.</footer>
+
+<script>
+"use strict";
+/* ---------- Shared ---------- */
+const $=id=>document.getElementById(id);
+const score={marc:0,martin:0,draw:0};
+function renderScore(){ $("scMarc").textContent=score.marc; $("scMartin").textContent=score.martin; $("scDraw").textContent=score.draw; }
+function logLine(html){ const l=$("log"); const d=document.createElement("div"); d.innerHTML=html; l.prepend(d); while(l.children.length>40) l.lastChild.remove(); }
+function setStatus(html){ $("status").innerHTML=html; }
+const NAME={marc:'<b class="m">Marc-KI</b>', martin:'<b class="t">Martin-KI</b>'};
+
+let game="ttt", running=false, speed=5;
+$("speed").oninput=e=>speed=+e.target.value;
+
+/* ===================================================================
+   TIC-TAC-TOE   (Marc = X = perfekt/Minimax, Martin = O = clever-mit-Patzer)
+   =================================================================== */
+const TTT={ board:Array(9).fill(""), turn:"marc", lines:[[0,1,2],[3,4,5],[6,7,8],[0,3,6],[1,4,7],[2,5,8],[0,4,8],[2,4,6]], timer:null };
+
+function tttRender(winLine){
+  const el=$("ttt"); el.innerHTML="";
+  TTT.board.forEach((v,i)=>{
+    const c=document.createElement("div");
+    c.className="cell"+(v==="X"?" x":v==="O"?" o":"")+(winLine&&winLine.includes(i)?" win":"");
+    c.textContent=v;
+    el.appendChild(c);
+  });
+}
+function tttWinner(b){
+  for(const [a,c,d] of TTT.lines){ if(b[a]&&b[a]===b[c]&&b[a]===b[d]) return {who:b[a],line:[a,c,d]}; }
+  if(b.every(x=>x)) return {who:"draw"};
+  return null;
+}
+// Minimax (perfektes Spiel) für Symbol `me`
+function minimax(b,me,cur){
+  const w=tttWinner(b);
+  if(w){ if(w.who==="draw") return 0; return w.who===me?10:-10; }
+  const moves=b.map((v,i)=>v?null:i).filter(i=>i!==null);
+  let best=cur===me?-Infinity:Infinity;
+  for(const i of moves){
+    b[i]=cur; const s=minimax(b,me,cur==="X"?"O":"X"); b[i]="";
+    best=cur===me?Math.max(best,s):Math.min(best,s);
+  }
+  return best;
+}
+function bestMove(b,me){
+  const moves=b.map((v,i)=>v?null:i).filter(i=>i!==null);
+  let best=-Infinity,pick=moves[0];
+  for(const i of moves){ b[i]=me; const s=minimax(b,me,me==="X"?"O":"X"); b[i]="";
+    if(s>best){best=s;pick=i;} }
+  return pick;
+}
+// Martin: meist clever, aber mit ~22% Zufalls-Patzer (damit Marc auch gewinnt)
+function martinMove(b){
+  const moves=b.map((v,i)=>v?null:i).filter(i=>i!==null);
+  if(Math.random()<0.22) return moves[Math.floor(Math.random()*moves.length)];
+  return bestMove(b,"O");
+}
+function tttStep(){
+  const sym=TTT.turn==="marc"?"X":"O";
+  const move=TTT.turn==="marc"?bestMove(TTT.board,"X"):martinMove(TTT.board);
+  TTT.board[move]=sym;
+  const r=Math.floor(move/3)+1, c=(move%3)+1;
+  logLine(`${NAME[TTT.turn]} setzt auf Feld ${r}/${c}`);
+  const w=tttWinner(TTT.board);
+  if(w){ tttRender(w.line); tttEnd(w); return; }
+  tttRender();
+  TTT.turn=TTT.turn==="marc"?"martin":"marc";
+  setStatus(`${NAME[TTT.turn]} denkt …`);
+  schedule(tttStep);
+}
+function tttEnd(w){
+  if(w.who==="draw"){ score.draw++; setStatus("Unentschieden 🤝"); logLine("➖ Unentschieden"); }
+  else { const who=w.who==="X"?"marc":"martin"; score[who]++; setStatus(`${NAME[who]} gewinnt! 🏆`); logLine(`🏆 ${NAME[who]} gewinnt die Runde`); }
+  renderScore();
+  if(running) setTimeout(()=>{ if(running&&game==="ttt"){ tttReset(); schedule(tttStep);} }, 1400);
+}
+function tttReset(){
+  TTT.board=Array(9).fill(""); TTT.turn="marc"; tttRender();
+  setStatus(running?`${NAME.marc} beginnt …`:"Bereit.");
+}
+
+/* ===================================================================
+   PONG   (Marc = links/cyan, Martin = rechts/pink, beide tracken den Ball)
+   =================================================================== */
+const cv=$("pong"), ctx=cv.getContext("2d");
+const W=cv.width, H=cv.height, PW=10, PH=64, BALL=8, WIN=5;
+const P={
+  marc:{x:14, y:H/2-PH/2, err:14, vmax:5},     // links
+  martin:{x:W-14-PW, y:H/2-PH/2, err:14, vmax:5}, // rechts
+  ball:{x:W/2,y:H/2,vx:0,vy:0}, raf:null
+};
+function pongServe(dir){
+  P.ball.x=W/2; P.ball.y=H/2;
+  const ang=(Math.random()*0.6-0.3); // leichter Winkel
+  const sp=4.2;
+  P.ball.vx=dir*sp*Math.cos(ang); P.ball.vy=sp*Math.sin(ang);
+}
+function pongAI(pad){
+  // Ziel: Ballhöhe + kleiner Wahrnehmungsfehler -> menschlich, nicht unbesiegbar
+  const target=P.ball.y - PH/2 + (Math.sin(Date.now()/300+pad.x)*pad.err);
+  const dy=target - pad.y;
+  pad.y += Math.max(-pad.vmax, Math.min(pad.vmax, dy));
+  pad.y=Math.max(0, Math.min(H-PH, pad.y));
+}
+function pongDraw(){
+  ctx.clearRect(0,0,W,H);
+  // Mittellinie
+  ctx.strokeStyle="#1e2735"; ctx.setLineDash([6,10]); ctx.beginPath();
+  ctx.moveTo(W/2,0); ctx.lineTo(W/2,H); ctx.stroke(); ctx.setLineDash([]);
+  // Paddles
+  ctx.fillStyle="#38bdf8"; ctx.fillRect(P.marc.x,P.marc.y,PW,PH);
+  ctx.fillStyle="#f472b6"; ctx.fillRect(P.martin.x,P.martin.y,PW,PH);
+  // Ball
+  ctx.fillStyle="#facc15"; ctx.beginPath(); ctx.arc(P.ball.x,P.ball.y,BALL,0,7); ctx.fill();
+}
+function pongFrame(){
+  if(!running||game!=="pong"){ P.raf=null; return; }
+  const steps=Math.max(1,Math.round(speed*0.7)); // Tempo = mehr Physik-Schritte pro Frame
+  for(let s=0;s<steps;s++){
+    pongAI(P.marc); pongAI(P.martin);
+    P.ball.x+=P.ball.vx; P.ball.y+=P.ball.vy;
+    if(P.ball.y<BALL){P.ball.y=BALL;P.ball.vy*=-1;}
+    if(P.ball.y>H-BALL){P.ball.y=H-BALL;P.ball.vy*=-1;}
+    // Marc-Paddle (links)
+    if(P.ball.x-BALL<P.marc.x+PW && P.ball.x>P.marc.x && P.ball.vx<0 &&
+       P.ball.y>P.marc.y && P.ball.y<P.marc.y+PH){
+      P.ball.vx=Math.abs(P.ball.vx)*1.04;
+      P.ball.vy+=((P.ball.y-(P.marc.y+PH/2))/(PH/2))*2;
+    }
+    // Martin-Paddle (rechts)
+    if(P.ball.x+BALL>P.martin.x && P.ball.x<P.martin.x+PW && P.ball.vx>0 &&
+       P.ball.y>P.martin.y && P.ball.y<P.martin.y+PH){
+      P.ball.vx=-Math.abs(P.ball.vx)*1.04;
+      P.ball.vy+=((P.ball.y-(P.martin.y+PH/2))/(PH/2))*2;
+    }
+    // Punkt
+    if(P.ball.x<0){ pongPoint("martin"); break; }
+    if(P.ball.x>W){ pongPoint("marc"); break; }
+  }
+  pongDraw();
+  P.raf=requestAnimationFrame(pongFrame);
+}
+let pongRound={marc:0,martin:0};
+function pongPoint(who){
+  pongRound[who]++;
+  logLine(`🏓 Punkt für ${NAME[who]} — Satz ${pongRound.marc}:${pongRound.martin}`);
+  setStatus(`Satz: ${NAME.marc} ${pongRound.marc} : ${pongRound.martin} ${NAME.martin}`);
+  if(pongRound[who]>=WIN){
+    score[who]++; renderScore();
+    setStatus(`${NAME[who]} gewinnt den Satz! 🏆`);
+    logLine(`🏆 ${NAME[who]} gewinnt (${pongRound.marc}:${pongRound.martin})`);
+    pongRound={marc:0,martin:0};
+  }
+  pongServe(who==="marc"?1:-1);
+}
+function pongResetPositions(){
+  P.marc.y=H/2-PH/2; P.martin.y=H/2-PH/2; pongServe(Math.random()<.5?1:-1); pongDraw();
+}
+
+/* ---------- Scheduler (Tempo-abhängig, für TTT) ---------- */
+function schedule(fn){
+  clearTimeout(TTT.timer);
+  if(!running) return;
+  const delay=1100 - speed*95; // 1=1005ms … 10=150ms
+  TTT.timer=setTimeout(()=>{ if(running&&game==="ttt") fn(); }, Math.max(120,delay));
+}
+
+/* ---------- Steuerung ---------- */
+function startLoop(){
+  if(game==="ttt"){ tttReset(); setStatus(`${NAME.marc} beginnt …`); schedule(tttStep); }
+  else { pongRound={marc:0,martin:0}; pongResetPositions(); if(!P.raf) P.raf=requestAnimationFrame(pongFrame); }
+}
+function stopLoop(){ clearTimeout(TTT.timer); }
+$("playBtn").onclick=()=>{
+  running=!running;
+  $("playBtn").textContent=running?"⏸ Pause":"▶ Start";
+  if(running) startLoop(); else { stopLoop(); setStatus("Pausiert."); }
+};
+$("resetBtn").onclick=()=>{ score.marc=score.martin=score.draw=0; renderScore(); logLine("⟳ Score zurückgesetzt"); };
+
+document.querySelectorAll(".tab").forEach(t=>{
+  t.onclick=()=>{
+    document.querySelectorAll(".tab").forEach(x=>x.classList.remove("active"));
+    t.classList.add("active");
+    game=t.dataset.game; stopLoop();
+    $("ttt").style.display = game==="ttt"?"grid":"none";
+    $("pong").style.display = game==="pong"?"block":"none";
+    if(game==="ttt"){ tttReset(); if(running) schedule(tttStep); }
+    else { pongResetPositions(); if(running && !P.raf) P.raf=requestAnimationFrame(pongFrame); }
+  };
+});
+
+/* init */
+tttReset(); renderScore(); pongDraw();
+</script>
+</body>
+</html>
